@@ -28,15 +28,26 @@ for i in range(len(cities)):
     cities[i][1] = float(cities[i][1])
     cities[i][2] = float(cities[i][2])
 
-def mapFunk(data):
+def map_init(data):
     temp = data.split("\t")
-    date = datetime.strptime(temp[3],'%Y-%m-%d %H:%M:%S')
-    delta = int(temp[4])
+    temp[0] = int(temp[0])
+    temp[1] = int(temp[1])
+    temp[2] = str(temp[2])
+    temp[3] = datetime.strptime(temp[3],'%Y-%m-%d %H:%M:%S')
+    temp[4] = int(temp[4])
+    temp[5] = float(temp[5])
+    temp[6] = float(temp[6])
+    temp[7] = str(temp[7])
+    temp[8] = str(temp[8])
+    return  temp
+
+def map_zulu_time(data):
+    temp = data[:]
+    date = temp[3]
+    delta = temp[4]
     newTime = datetime.strftime(date + timedelta(minutes=delta), '%Y-%m-%d %H:%M:%S')
     temp[3] = newTime
-    temp[4] = "0"
-    res = "\t".join(temp)
-    return res
+    return temp
 
 def haversine(lat0, lng0,lat1,lng1):
     lng0,lat0,lng1,lat1= map(radians, [lng0,lat0,lng1,lat1])
@@ -49,21 +60,29 @@ def haversine(lat0, lng0,lat1,lng1):
     return c*r
 
 def map_city(data):
-    temp=data.split("\t")
+    temp = data[:]
     distlist=[]
     for i in range(len(cities)):
         dist = haversine(float(temp[5]),float(temp[6]),cities[i][1], cities[i][2])
         distlist.append((i,dist))
     city = max(distlist,key=itemgetter(1))
-    temp.append(cities[city[0]][0])
-    temp.append(cities[city[0]][4])
-    return "\t".join(temp)
+    temp.append(str(cities[city[0]][0]))
+    temp.append(str(cities[city[0]][4]))
+    return temp
+
+def map_key_value(data):
+    return (data[1],1)
 
 #################################################################
 print("\n\n\n")
 print("#############################################################")
 print("\n\n\n")
-data_zulu = data0.map(mapFunk)
+data_init = data0.map(map_init)
+print(data_init.first())
+print("\n\n\n")
+print("#############################################################")
+print("\n\n\n")
+data_zulu = data_init.map(map_zulu_time)
 print (data_zulu.first())
 print("\n\n\n")
 print("#############################################################")
@@ -73,5 +92,11 @@ print(data_city.first())
 print("\n\n\n")
 print("#############################################################")
 print("\n\n\n")
-unique_users = data0.countByKey().items()
+"""
+key_value = data_init.map(map_key_value)
+unique_users =key_value.countByKey().items()
 print(len(unique_users))
+
+-----4a------
+256307
+"""
