@@ -2,6 +2,7 @@ from pyspark import SparkConf, SparkContext
 from datetime import datetime,timedelta
 from math import *
 from operator import itemgetter
+from operator import add
 
 conf = (SparkConf()
          .setMaster("local[8]")
@@ -65,7 +66,7 @@ def map_city(data):
     for i in range(len(cities)):
         dist = haversine(float(temp[5]),float(temp[6]),cities[i][1], cities[i][2])
         distlist.append((i,dist))
-    city = max(distlist,key=itemgetter(1))
+    city = min(distlist,key=itemgetter(1))
     temp.append(str(cities[city[0]][0]))
     temp.append(str(cities[city[0]][4]))
     return temp
@@ -102,12 +103,12 @@ print("\n\n\n")
 print("#############################################################")
 print("\n\n\n")
 
-"""
------4a------
-key_value_id = data_init.map(map_key_value_id)
-unique_users =key_value_id.countByKey().items()
-print(len(unique_users))
 
+#-----4a------
+#key_value_id = data_init.map(map_key_value_id)
+#unique_users =key_value_id.reduceByKey(add)
+#print(unique_users.count())
+"""
 #>> 256307
 
 print("\n\n\n")
@@ -126,8 +127,8 @@ print("\n\n\n")
 
 #------4c-------
 key_value_session = data_init.map(map_key_value_session)
-unique_sessions = key_value_session.countByKey().items()
-print(len(unique_sessions))
+unique_sessions = key_value_session.reduceByKey(add)
+print(unique_sessions.count())
 
 #>>6338302
 
@@ -137,15 +138,39 @@ print("\n\n\n")
 """
 
 #--------------4d----------
-key_value_country = data_city.map(map_key_value_country)
-unique_countries = key_value_country.countByKey().items()
+#key_value_country = data_city.map(map_key_value_country)
+#unique_countries = key_value_country.reduceByKey(add)
+
+#print(unique_countries.count())
+
+#>>26
 
 #--------4e---------------
-#key_value_city = data_city.map(map_key_value_city)
-#unique_cities = key_value_city.countByKey().items()
+key_value_city = data_city.map(map_key_value_city)
+unique_cities = key_value_city.reduceByKey(add)
 
-print(len(unique_countries))
-print(len(unique_cities))
+print(unique_cities.count())
+
+
+
+#-----------5--------------
+"""
+key_value_session = data_init.map(map_key_value_session)
+unique_sessions = key_value_session.countByKey().items()
+
+filtered_unique_sessions = unique_sessions.filter(lambda x: x[1]>4)"""
+print("\n\n\n")
+print("#############################################################")
+print("\n\n\n")
+print (filtered_unique_sessions.take(5))
+print("\n\n\n")
+print("#############################################################")
+print("\n\n\n")
+"""key_value_city = data_city.map(map_key_value_city)
+unique_cities = key_value_city.countByKey().items()
+print(len(unique_cities))2"""
+#print(len(unique_countries))
+#print(len(unique_cities))
 print("\n\n\n")
 print("#############################################################")
 print("\n\n\n")
