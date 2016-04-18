@@ -70,8 +70,17 @@ def map_city(data):
     temp.append(str(cities[city[0]][4]))
     return temp
 
-def map_key_value(data):
+def map_key_value_id(data):
     return (data[1],1)
+
+def map_key_value_session(data):
+    return (data[2],1)
+
+def map_key_value_country(data):
+    return (data[10],1)
+
+def map_key_value_city(data):
+    return (data[9],1)
 
 #################################################################
 print("\n\n\n")
@@ -92,11 +101,51 @@ print(data_city.first())
 print("\n\n\n")
 print("#############################################################")
 print("\n\n\n")
+
 """
-key_value = data_init.map(map_key_value)
-unique_users =key_value.countByKey().items()
+-----4a------
+key_value_id = data_init.map(map_key_value_id)
+unique_users =key_value_id.countByKey().items()
 print(len(unique_users))
 
------4a------
-256307
+#>> 256307
+
+print("\n\n\n")
+print("#############################################################")
+print("\n\n\n")
+
+#------4b-------
+
+print(data0.count())
+
+#>>19265256
+
+print("\n\n\n")
+print("#############################################################")
+print("\n\n\n")
+
+#------4c-------
+key_value_session = data_init.map(map_key_value_session)
+unique_sessions = key_value_session.countByKey().items()
+print(len(unique_sessions))
+
+#>>6338302
+
+print("\n\n\n")
+print("#############################################################")
+print("\n\n\n")
 """
+
+#--------------4d----------
+key_value_country = data_city.map(map_key_value_country)
+unique_countries = key_value_country.countByKey().items()
+
+#--------4e---------------
+#key_value_city = data_city.map(map_key_value_city)
+#unique_cities = key_value_city.countByKey().items()
+
+print(len(unique_countries))
+print(len(unique_cities))
+print("\n\n\n")
+print("#############################################################")
+print("\n\n\n")
