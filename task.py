@@ -146,19 +146,21 @@ print("\n\n\n")
 #>>26
 
 #--------4e---------------
-key_value_city = data_city.map(map_key_value_city)
-unique_cities = key_value_city.reduceByKey(add)
+#key_value_city = data_city.map(map_key_value_city)
+#unique_cities = key_value_city.reduceByKey(add)
 
-print(unique_cities.count())
+#print(unique_cities.count())
 
-
+#>>413
 
 #-----------5--------------
-"""
-key_value_session = data_init.map(map_key_value_session)
-unique_sessions = key_value_session.countByKey().items()
 
-filtered_unique_sessions = unique_sessions.filter(lambda x: x[1]>4)"""
+key_value_session = data_init.map(map_key_value_session)
+unique_sessions = key_value_session.reduceByKey(add)
+
+filtered_unique_sessions = unique_sessions.filter(lambda x: x[1]>4)
+sessions_histogram = filtered_unique_sessions.histogram(8)
+print(sessions_histogramx)
 print("\n\n\n")
 print("#############################################################")
 print("\n\n\n")
