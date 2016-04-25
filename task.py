@@ -71,6 +71,13 @@ def map_city(data):
     temp.append(str(cities[city[0]][4]))
     return temp
 
+def map_session_distance(data):
+    session_list = data[1]
+    session_list = sorted(session_list, key=lambda session : session[0])
+    first_session = session_list.pop()
+    for i , session in enumerate(session_list):
+
+
 def map_key_value_id(data):
     return (data[1],1)
 
@@ -83,32 +90,35 @@ def map_key_value_country(data):
 def map_key_value_city(data):
     return (data[9],1)
 
+def map_key_value_session_w_geo(data):
+    return (data[2],(data[3],data[5],data[6]))
+
 #################################################################
 print("\n\n\n")
 print("#############################################################")
 print("\n\n\n")
 data_init = data0.map(map_init)
-print(data_init.first())
+#print(data_init.first())
 print("\n\n\n")
 print("#############################################################")
 print("\n\n\n")
 data_zulu = data_init.map(map_zulu_time)
-print (data_zulu.first())
+#print (data_zulu.first())
 print("\n\n\n")
 print("#############################################################")
 print("\n\n\n")
-data_city = data_zulu.map(map_city)
-print(data_city.first())
+#data_city = data_zulu.map(map_city)
+#print(data_city.first())
 print("\n\n\n")
 print("#############################################################")
 print("\n\n\n")
 
-
-#-----4a------
-#key_value_id = data_init.map(map_key_value_id)
-#unique_users =key_value_id.reduceByKey(add)
-#print(unique_users.count())
 """
+#-----4a------
+key_value_id = data_init.map(map_key_value_id)
+unique_users =key_value_id.reduceByKey(add)
+print(unique_users.count())
+
 #>> 256307
 
 print("\n\n\n")
@@ -158,21 +168,18 @@ print("\n\n\n")
 key_value_session = data_init.map(map_key_value_session)
 unique_sessions = key_value_session.reduceByKey(add)
 
-filtered_unique_sessions = unique_sessions.filter(lambda x: x[1]>4)
-sessions_histogram = filtered_unique_sessions.histogram(8)
-print(sessions_histogramx)
-print("\n\n\n")
-print("#############################################################")
-print("\n\n\n")
-print (filtered_unique_sessions.take(5))
-print("\n\n\n")
-print("#############################################################")
-print("\n\n\n")
-"""key_value_city = data_city.map(map_key_value_city)
-unique_cities = key_value_city.countByKey().items()
-print(len(unique_cities))2"""
-#print(len(unique_countries))
-#print(len(unique_cities))
-print("\n\n\n")
-print("#############################################################")
-print("\n\n\n")
+#-------6-----------------
+
+inverted_filtered_unique_sessions = unique_sessions.filter(lambda x: x[1]<4)
+temp_session_key_w_geo = data_zulu.map(map_key_value_session_w_geo)
+
+filtered_sessions = temp_session_key_w_geo.subtractByKey(inverted_filtered_unique_sessions)
+filtered_unique_sessions = filtered_sessions.groupByKey().mapValues(list)
+print(filtered_unique_sessions.take(5))
+#('9809_BR_86', [(datetime.datetime(2013, 1, 31, 2, 38, 13), -1.337997, -48.388977), (datetime.datetime(2013, 1, 31, 2, 39), -1.337858, -48.388899), (datetime.datetime(2013, 1, 31, 2, 39, 41), -1.337829, -48.388851), (datetime.datetime(2013, 1, 31, 2, 40, 7), -1.336896, -48.383849), (datetime.datetime(2013, 1, 31, 2, 42), -1.337103, -48.393828), (datetime.datetime(2013, 1, 31, 2, 43, 19), -1.34928, -48.384943)])
+#-->> 770727
+
+
+
+
+sessions_with_info
