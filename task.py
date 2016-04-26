@@ -15,7 +15,7 @@ print "\nSparkConf id: ", sc.applicationId
 print "\nUser: ", sc.sparkUser()
 print "\nVersion: ", sc.version
 
-data0 = sc.textFile("fs/test.tsv")
+data0 = sc.textFile("fs/dataset_TIST2015.tsv")
 data1 = sc.textFile("fs/dataset_TIST2015_Cities.txt")
 
 header1 = data1.first()
@@ -41,6 +41,19 @@ def map_init(data):
     temp[7] = str(temp[7])
     temp[8] = str(temp[8])
     return  temp
+
+def map_init_key_fullvalue(data):
+    temp = data.split("\t")
+    temp[0] = int(temp[0])
+    temp[1] = int(temp[1])
+    temp[2] = str(temp[2])
+    temp[3] = datetime.strptime(temp[3],'%Y-%m-%d %H:%M:%S')
+    temp[4] = int(temp[4])
+    temp[5] = float(temp[5])
+    temp[6] = float(temp[6])
+    temp[7] = str(temp[7])
+    temp[8] = str(temp[8])
+    return  (temp[2],tuple(temp))
 
 def map_zulu_time(data):
     temp = data[:]
@@ -79,7 +92,23 @@ def map_session_distance(data):
     current_session = session_list.pop()
     for i , session in enumerate(session_list):
         total_dist += haversine(session[1],session[2],current_session[1],current_session[2])
-    return (data[0] , [data[1],total_dist,number_of_sessions])
+    return (data[0], (total_dist, number_of_sessions))
+
+def map_to_file_input(data):
+
+    res = ""
+
+    res+=str(data[1][0])+"\t"
+    res+=str(data[1][1])+"\t"
+    res+=str(data[1][2])+"\t"
+    res+=str(data[1][3])+"\t"
+    res+=str(data[1][4])+"\t"
+    res+=str(data[1][5])+"\t"
+    res+=str(data[1][6])+"\t"
+    res+=str(data[1][7])+"\t"
+    res+=str(data[1][8])+"\t"
+
+    return res
 
 
 def map_key_value_id(data):
@@ -98,58 +127,42 @@ def map_key_value_session_w_geo(data):
     return (data[2],(data[3],data[5],data[6]))
 
 #################################################################
-print("\n\n\n")
-print("#############################################################")
-print("\n\n\n")
+
+#-----------------1------------
 data_init = data0.map(map_init)
 #print(data_init.first())
-print("\n\n\n")
-print("#############################################################")
-print("\n\n\n")
+
+#---------------------2----------------
 data_zulu = data_init.map(map_zulu_time)
 #print (data_zulu.first())
-print("\n\n\n")
-print("#############################################################")
-print("\n\n\n")
+
+#--------------3----------------------
+
 #data_city = data_zulu.map(map_city)
 #print(data_city.first())
-print("\n\n\n")
-print("#############################################################")
-print("\n\n\n")
 
-"""
+
 #-----4a------
-key_value_id = data_init.map(map_key_value_id)
-unique_users =key_value_id.reduceByKey(add)
-print(unique_users.count())
+
+#key_value_id = data_init.map(map_key_value_id)
+#unique_users =key_value_id.reduceByKey(add)
+#print(unique_users.count())
 
 #>> 256307
 
-print("\n\n\n")
-print("#############################################################")
-print("\n\n\n")
 
 #------4b-------
 
-print(data0.count())
+#print(data0.count())
 
 #>>19265256
 
-print("\n\n\n")
-print("#############################################################")
-print("\n\n\n")
-
 #------4c-------
-key_value_session = data_init.map(map_key_value_session)
-unique_sessions = key_value_session.reduceByKey(add)
-print(unique_sessions.count())
+#key_value_session = data_init.map(map_key_value_session)
+#unique_sessions = key_value_session.reduceByKey(add)
+#print(unique_sessions.count())
 
 #>>6338302
-
-print("\n\n\n")
-print("#############################################################")
-print("\n\n\n")
-"""
 
 #--------------4d----------
 #key_value_country = data_city.map(map_key_value_country)
@@ -180,8 +193,22 @@ temp_session_key_w_geo = data_zulu.map(map_key_value_session_w_geo)
 filtered_sessions = temp_session_key_w_geo.subtractByKey(inverted_filtered_unique_sessions)
 filtered_unique_sessions = filtered_sessions.groupByKey().mapValues(list)
 
-#('9809_BR_86', [(datetime.datetime(2013, 1, 31, 2, 38, 13), -1.337997, -48.388977), (datetime.datetime(2013, 1, 31, 2, 39), -1.337858, -48.388899), (datetime.datetime(2013, 1, 31, 2, 39, 41), -1.337829, -48.388851), (datetime.datetime(2013, 1, 31, 2, 40, 7), -1.336896, -48.383849), (datetime.datetime(2013, 1, 31, 2, 42), -1.337103, -48.393828), (datetime.datetime(2013, 1, 31, 2, 43, 19), -1.34928, -48.384943)])
-#-->> 770727
 filtered_unique_sessions = filtered_unique_sessions.map(map_session_distance)
-filtered_unique_sessions_two = filtered_unique_sessions.filter(lambda x : x[1][1] > 50)
-print(filtered_unique_sessions_two.takeOrdered(5, key=lambda x : -x[1][2]))
+
+#---------------------7-----------------
+
+
+filtered_unique_sessions_two = filtered_unique_sessions.filter(lambda x : x[1][0] > 50)
+top_sessions = filtered_unique_sessions_two.takeOrdered(100, key=lambda x : -x[1][1])
+top_sessions = sc.parallelize(top_sessions)
+
+inverted_data_init_filtered = unique_sessions.subtractByKey(top_sessions)
+
+data_init_key_fullvalue = data0.map(map_init_key_fullvalue)
+top_sessions_key_fullvaule = data_init_key_fullvalue.subtractByKey(inverted_data_init_filtered)
+
+top_sessions = top_sessions_key_fullvaule.map(map_to_file_input)
+print (top_sessions.count())
+top_sessions_header = sc.parallelize(["checkin_id\tuser_id\tsession_id\tzulu_time\ttimezone_offset\tlat\tlng\tcategory\tsubcategory"])
+top_sessions = top_sessions_header.union(top_sessions)
+top_sessions.saveAsTextFile("fs/result")
