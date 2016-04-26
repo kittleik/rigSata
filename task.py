@@ -126,6 +126,9 @@ def map_key_value_city(data):
 def map_key_value_session_w_geo(data):
     return (data[2],(data[3],data[5],data[6]))
 
+def map_to_histogram(data):
+    return (data[1], 1)
+
 #################################################################
 
 #-----------------1------------
@@ -160,6 +163,7 @@ data_zulu = data_init.map(map_zulu_time)
 #------4c-------
 #key_value_session = data_init.map(map_key_value_session)
 #unique_sessions = key_value_session.reduceByKey(add)
+
 #print(unique_sessions.count())
 
 #>>6338302
@@ -182,8 +186,10 @@ data_zulu = data_init.map(map_zulu_time)
 
 #-----------5--------------
 
-key_value_session = data_init.map(map_key_value_session)
-unique_sessions = key_value_session.reduceByKey(add)
+#unique_sessions_histomapped = unique_sessions.map(map_to_histogram)
+#unique_sessions_histogram = unique_sessions_histomapped.reduceByKey(add)
+
+#print(unique_sessions_histogram)
 
 #-------6-----------------
 
