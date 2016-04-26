@@ -15,7 +15,7 @@ print "\nSparkConf id: ", sc.applicationId
 print "\nUser: ", sc.sparkUser()
 print "\nVersion: ", sc.version
 
-data0 = sc.textFile("fs/dataset_TIST2015.tsv")
+data0 = sc.textFile("fs/test.tsv")
 data1 = sc.textFile("fs/dataset_TIST2015_Cities.txt")
 
 header1 = data1.first()
@@ -73,9 +73,13 @@ def map_city(data):
 
 def map_session_distance(data):
     session_list = data[1]
+    number_of_sessions = len(session_list)
     session_list = sorted(session_list, key=lambda session : session[0])
-    first_session = session_list.pop()
+    total_dist = 0
+    current_session = session_list.pop()
     for i , session in enumerate(session_list):
+        total_dist += haversine(session[1],session[2],current_session[1],current_session[2])
+    return (data[0] , [data[1],total_dist,number_of_sessions])
 
 
 def map_key_value_id(data):
@@ -175,11 +179,9 @@ temp_session_key_w_geo = data_zulu.map(map_key_value_session_w_geo)
 
 filtered_sessions = temp_session_key_w_geo.subtractByKey(inverted_filtered_unique_sessions)
 filtered_unique_sessions = filtered_sessions.groupByKey().mapValues(list)
-print(filtered_unique_sessions.take(5))
+
 #('9809_BR_86', [(datetime.datetime(2013, 1, 31, 2, 38, 13), -1.337997, -48.388977), (datetime.datetime(2013, 1, 31, 2, 39), -1.337858, -48.388899), (datetime.datetime(2013, 1, 31, 2, 39, 41), -1.337829, -48.388851), (datetime.datetime(2013, 1, 31, 2, 40, 7), -1.336896, -48.383849), (datetime.datetime(2013, 1, 31, 2, 42), -1.337103, -48.393828), (datetime.datetime(2013, 1, 31, 2, 43, 19), -1.34928, -48.384943)])
 #-->> 770727
-
-
-
-
-sessions_with_info
+filtered_unique_sessions = filtered_unique_sessions.map(map_session_distance)
+filtered_unique_sessions_two = filtered_unique_sessions.filter(lambda x : x[1][1] > 50)
+print(filtered_unique_sessions_two.takeOrdered(5, key=lambda x : -x[1][2]))
